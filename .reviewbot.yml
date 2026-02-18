@@ -1,0 +1,7 @@
+# Sentinel Review configuration
+enabled: true
+specialists:
+  - model: "antigravity-manager/claude-opus-4-6-thinking"
+    role: "primary"
+  - model: "openai/gpt-5.2"
+    role: "secondary"
