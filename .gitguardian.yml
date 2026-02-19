@@ -1,0 +1,5 @@
+# Disable GitGuardian scanning for this test repo
+# This repo intentionally contains fake secrets as review bait
+scanning:
+  paths-ignore:
+    - "**/*"
