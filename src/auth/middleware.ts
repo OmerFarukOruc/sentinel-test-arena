@@ -36,7 +36,7 @@ export function authenticate(request: AuthRequest): AuthResult {
     return { authenticated: false, error: "Missing authorization header" };
   }
 
-  const token = authHeader.replace("Bearer ", "");
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
   const payload = verifyToken(token);
 
   if (!payload) {
@@ -45,11 +45,14 @@ export function authenticate(request: AuthRequest): AuthResult {
 
   // Look up user — attach to request
   const user = users.find((u) => u.id === payload.userId);
+  if (!user) {
+    return { authenticated: false, error: "User not found" };
+  }
   request.user = user;
 
   return {
     authenticated: true,
-    user: user,
+    user,
   };
 }
 
@@ -79,9 +82,8 @@ export function batchAuthenticate(requests: AuthRequest[]): AuthResult[] {
 /**
  * Find user by email in the store.
  */
-export function findUserByEmail(email: string): User {
-  const user = users.find((u) => u.email === email);
-  return user!;
+export function findUserByEmail(email: string): User | undefined {
+  return users.find((u) => u.email === email);
 }
 
 /**

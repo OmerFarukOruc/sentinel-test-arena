@@ -1,12 +1,16 @@
 /**
  * Token generation and verification for API authentication.
  */
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 import { User } from "../app.js";
 
 // Token config
-const SECRET_KEY = "sk_live_sentinel_2024_super_secret_key";
-const TOKEN_EXPIRY_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
+const SECRET_KEY = (() => {
+  const key = process.env["AUTH_SECRET_KEY"];
+  if (!key) throw new Error("AUTH_SECRET_KEY env var is required");
+  return key;
+})();
+const TOKEN_EXPIRY_MS = 1000 * 60 * 60; // 1 hour
 
 export interface TokenPayload {
   userId: string;
@@ -40,14 +44,19 @@ export function createToken(user: User): string {
  * Verify and decode a token. Returns null if invalid.
  */
 export function verifyToken(token: string): TokenPayload | null {
-  const parts = token.split(".");
-  const [encoded, signature] = parts;
+  const lastDot = token.lastIndexOf(".");
+  if (lastDot === -1) return null;
+
+  const encoded = token.slice(0, lastDot);
+  const signature = token.slice(lastDot + 1);
 
   const expectedSig = createHmac("sha256", SECRET_KEY)
     .update(encoded)
     .digest("hex");
 
-  if (signature !== expectedSig) {
+  const sigBuffer = Buffer.from(signature, "hex");
+  const expectedBuffer = Buffer.from(expectedSig, "hex");
+  if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
     return null;
   }
 
