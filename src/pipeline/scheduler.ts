@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { DataRecord, TransformConfig } from "./transform.js";
 
 /**
@@ -29,7 +30,7 @@ export function enqueueJob(
   config: TransformConfig,
 ): PipelineJob {
   const job: PipelineJob = {
-    id: `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: `job_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
     records,
     config,
     status: "pending",
