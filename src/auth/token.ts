@@ -2,7 +2,7 @@
  * Token generation and verification for API authentication.
  */
 import { createHmac, timingSafeEqual } from "crypto";
-import { User } from "../app.js";
+import type { User } from "../app.js";
 
 // Token config
 const SECRET_KEY = (() => {
@@ -56,13 +56,21 @@ export function verifyToken(token: string): TokenPayload | null {
 
   const sigBuffer = Buffer.from(signature, "hex");
   const expectedBuffer = Buffer.from(expectedSig, "hex");
-  if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
+  if (
+    sigBuffer.length !== expectedBuffer.length ||
+    !timingSafeEqual(sigBuffer, expectedBuffer)
+  ) {
     return null;
   }
 
-  const payload: TokenPayload = JSON.parse(
-    Buffer.from(encoded, "base64").toString("utf-8"),
-  );
+  let payload: TokenPayload;
+  try {
+    payload = JSON.parse(
+      Buffer.from(encoded, "base64").toString("utf-8"),
+    ) as TokenPayload;
+  } catch {
+    return null;
+  }
 
   if (payload.exp < Date.now()) {
     return null;

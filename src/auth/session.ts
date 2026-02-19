@@ -1,11 +1,21 @@
 /**
  * Session management — tracks active user sessions.
  */
-import { readFile, writeFile } from "fs/promises";
-import { randomUUID } from "crypto";
-import { TokenPayload } from "./token.js";
 
-const SESSION_FILE = "/tmp/sentinel-sessions.json";
+import { randomUUID } from "crypto";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import type { TokenPayload } from "./token.js";
+
+const SESSION_DIR =
+  process.env.SESSION_DIR ?? `${process.env.HOME ?? "/tmp"}/.sentinel`;
+const SESSION_FILE = `${SESSION_DIR}/sessions.json`;
+
+let dirEnsured = false;
+async function ensureDir(): Promise<void> {
+  if (dirEnsured) return;
+  await mkdir(SESSION_DIR, { recursive: true, mode: 0o700 });
+  dirEnsured = true;
+}
 const MAX_SESSIONS_PER_USER = 5;
 
 export interface Session {
@@ -27,7 +37,10 @@ async function loadSessions(): Promise<Session[]> {
 }
 
 async function saveSessions(sessions: Session[]): Promise<void> {
-  await writeFile(SESSION_FILE, JSON.stringify(sessions, null, 2));
+  await ensureDir();
+  await writeFile(SESSION_FILE, JSON.stringify(sessions, null, 2), {
+    mode: 0o600,
+  });
 }
 
 export async function createSession(
