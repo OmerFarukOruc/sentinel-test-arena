@@ -43,3 +43,4 @@ export function calculateDiscount(price: number): number {
 // e2e raw-fetch verify 1771948086
 // e2e sse-stream verify 1771948652
 // e2e model-id-fix verify 1771949738
+// e2e promptAsync+poll verify 1771962857
