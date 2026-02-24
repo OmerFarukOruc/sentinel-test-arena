@@ -34,3 +34,4 @@ export function calculateDiscount(price: number): number {
 // diag trigger 2 1771937007
 // diag trigger 3 1771938048
 // fix verification 1771938660
+// verify polling fix 1771939160
