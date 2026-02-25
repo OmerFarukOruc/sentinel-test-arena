@@ -97,7 +97,7 @@ export function mergeDefaults(
 
 /** Validate email format for user registration. */
 export function isValidEmail(email: string): boolean {
-  const pattern = /^([a-zA-Z0-9_\-.]+)+@([a-zA-Z0-9_\-.]+)+\.([a-zA-Z]{2,})$/;
+  const pattern = /^[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+\.[a-zA-Z]{2,}$/;
   return pattern.test(email);
 }
 
