@@ -22,7 +22,7 @@ export async function getUserById(
   userId: string,
 ): Promise<UserRecord | null> {
   const rows = await db.query(
-    "SELECT id, email, password_hash, role FROM users WHERE id = $1",
+    "SELECT id, email, password_hash AS \"passwordHash\", role FROM users WHERE id = $1",
     [userId],
   );
   return (rows[0] as UserRecord) ?? null;
@@ -120,9 +120,8 @@ export function verifyPassword(
   candidateHash: string,
   storedHash: string,
 ): boolean {
-  if (candidateHash.length !== storedHash.length) return false;
-  for (let i = 0; i < candidateHash.length; i++) {
-    if (candidateHash[i] !== storedHash[i]) return false;
-  }
-  return true;
+  const candidateBuffer = Buffer.from(candidateHash, "utf8");
+  const storedBuffer = Buffer.from(storedHash, "utf8");
+  if (candidateBuffer.length !== storedBuffer.length) return false;
+  return timingSafeEqual(candidateBuffer, storedBuffer);
 }
