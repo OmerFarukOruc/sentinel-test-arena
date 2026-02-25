@@ -3,7 +3,7 @@
  * and request handling.
  */
 
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 interface DatabaseClient {
   query(sql: string, params?: unknown[]): Promise<unknown[]>;
@@ -22,7 +22,7 @@ export async function getUserById(
   userId: string,
 ): Promise<UserRecord | null> {
   const rows = await db.query(
-    "SELECT id, email, password_hash, role FROM users WHERE id = $1",
+    "SELECT id, email, password_hash AS \"passwordHash\", role FROM users WHERE id = $1",
     [userId],
   );
   return (rows[0] as UserRecord) ?? null;
@@ -36,11 +36,10 @@ export function verifyWebhookSignature(
   const webhookSecret = process.env.WEBHOOK_SECRET;
   if (!webhookSecret) return false;
   const expected = computeHmac(payload, webhookSecret);
-  if (expected.length !== signature.length) return false;
-  for (let i = 0; i < expected.length; i++) {
-    if (expected[i] !== signature[i]) return false;
-  }
-  return true;
+  const expectedBuffer = Buffer.from(expected, "hex");
+  const signatureBuffer = Buffer.from(signature, "hex");
+  if (expectedBuffer.length !== signatureBuffer.length) return false;
+  return timingSafeEqual(expectedBuffer, signatureBuffer);
 }
 
 function computeHmac(data: string | Buffer, key: string): string {
@@ -79,7 +78,10 @@ export function mergeDefaults(
   overrides: Record<string, unknown>,
 ): Record<string, unknown> {
   const result = { ...defaults };
-  for (const key in overrides) {
+  for (const key of Object.keys(overrides)) {
+    if (key === "__proto__" || key === "prototype" || key === "constructor") {
+      continue;
+    }
     const val = overrides[key];
     if (typeof val === "object" && val !== null && !Array.isArray(val)) {
       result[key] = mergeDefaults(
