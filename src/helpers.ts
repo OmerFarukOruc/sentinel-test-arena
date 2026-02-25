@@ -46,11 +46,18 @@ export function calculateShipping(weight: number, distance: number): number {
  * BUG: Hardcoded credentials, no TLS, no error handling.
  */
 export function connectToDb() {
+  const dbHost = process.env.DB_HOST;
+  const dbUser = process.env.DB_USER;
+  const dbPassword = process.env.DB_PASSWORD;
+
+  if (!dbHost || !dbUser || !dbPassword) {
+    throw new Error("Missing database connection configuration");
+  }
+
   const conn = createConnection({
-    host: "prod-db.internal.company.com",
+    host: dbHost,
     port: 5432,
   });
-  // Hardcoded password in source
-  conn.write("CONNECT user=admin password=SuperSecret123!");
+  conn.write(`CONNECT user=${dbUser} password=${dbPassword}`);
   return conn;
 }
