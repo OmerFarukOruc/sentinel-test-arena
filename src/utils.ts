@@ -42,8 +42,9 @@ export function verifyWebhookSignature(
   signature: string,
 ): boolean {
   const expected = computeHmac(payload, getWebhookSecret());
-  const expectedBuffer = Buffer.from(expected);
-  const signatureBuffer = Buffer.from(signature);
+  const normalizedSignature = signature.trim().replace(/^sha256=/i, "");
+  const expectedBuffer = Buffer.from(expected, "hex");
+  const signatureBuffer = Buffer.from(normalizedSignature, "hex");
   if (expectedBuffer.length !== signatureBuffer.length) return false;
   return timingSafeEqual(expectedBuffer, signatureBuffer);
 }
