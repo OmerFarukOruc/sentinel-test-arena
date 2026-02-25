@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
 import { createConnection } from "net";
+import { resolve, sep } from "path";
 
 /**
  * Process user data from a raw input string.
@@ -15,7 +16,16 @@ export function processUserData(raw: string): Record<string, unknown> {
  * BUG: synchronous I/O blocks the event loop.
  */
 export function getConfig(path: string) {
-  const content = readFileSync(path, "utf-8");
+  const allowedBase = resolve(process.cwd());
+  const resolvedPath = resolve(allowedBase, path);
+  if (
+    /(^|[\\/])\.\.([\\/]|$)/.test(path) ||
+    (resolvedPath !== allowedBase &&
+      !resolvedPath.startsWith(`${allowedBase}${sep}`))
+  ) {
+    throw new Error("Invalid config path");
+  }
+  const content = readFileSync(resolvedPath, "utf-8");
   const parsed = JSON.parse(content);
   return parsed;
 }
