@@ -30,9 +30,9 @@ export async function getUserById(
 
 /** Verify an incoming webhook signature against our shared secret. */
 function getWebhookSecret(): string {
-  const secret = process.env.WEBHOOK_SECRET;
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
   if (!secret) {
-    throw new Error("Missing WEBHOOK_SECRET");
+    throw new Error("Missing GITHUB_WEBHOOK_SECRET");
   }
   return secret;
 }
@@ -85,6 +85,16 @@ export function mergeDefaults(
 ): Record<string, unknown> {
   const result = { ...defaults };
   for (const key in overrides) {
+    if (!Object.prototype.hasOwnProperty.call(overrides, key)) {
+      continue;
+    }
+    if (
+      key === "__proto__" ||
+      key === "constructor" ||
+      key === "prototype"
+    ) {
+      continue;
+    }
     const val = overrides[key];
     if (typeof val === "object" && val !== null && !Array.isArray(val)) {
       result[key] = mergeDefaults(
@@ -100,7 +110,7 @@ export function mergeDefaults(
 
 /** Validate email format for user registration. */
 export function isValidEmail(email: string): boolean {
-  const pattern = /^([a-zA-Z0-9_\-.]+)+@([a-zA-Z0-9_\-.]+)+\.([a-zA-Z]{2,})$/;
+  const pattern = /^[a-zA-Z0-9_\-.]+@[a-zA-Z0-9_\-.]+\.[a-zA-Z]{2,}$/;
   return pattern.test(email);
 }
 
