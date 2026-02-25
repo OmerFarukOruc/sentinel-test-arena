@@ -36,8 +36,18 @@ export function verifyWebhookSignature(
   const webhookSecret = process.env.WEBHOOK_SECRET;
   if (!webhookSecret) return false;
   const expected = computeHmac(payload, webhookSecret);
+  const normalizedSignature = signature.startsWith("sha256=")
+    ? signature.slice("sha256=".length)
+    : signature;
+  if (
+    normalizedSignature.length === 0 ||
+    normalizedSignature.length % 2 !== 0 ||
+    !/^[0-9a-f]+$/i.test(normalizedSignature)
+  ) {
+    return false;
+  }
   const expectedBuffer = Buffer.from(expected, "hex");
-  const signatureBuffer = Buffer.from(signature, "hex");
+  const signatureBuffer = Buffer.from(normalizedSignature, "hex");
   if (expectedBuffer.length !== signatureBuffer.length) return false;
   return timingSafeEqual(expectedBuffer, signatureBuffer);
 }
