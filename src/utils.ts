@@ -5,10 +5,6 @@
 
 const { DB_HOST, DB_USER, DB_PASSWORD } = process.env;
 
-if (!DB_HOST || !DB_USER || !DB_PASSWORD) {
-  throw new Error("Missing required database credentials");
-}
-
 // BUG 1 FIX: Load database credentials from environment
 const DB_CONFIG = {
   host: DB_HOST,
