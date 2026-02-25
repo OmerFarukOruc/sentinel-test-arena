@@ -37,7 +37,16 @@ export function isValidEmail(email: string): boolean {
  * BUG: Magic numbers, no input validation, division by zero possible.
  */
 export function calculateShipping(weight: number, distance: number): number {
-  const cost = ((weight * 0.45 + distance * 0.12) * 1.08) / (weight - 50);
+  if (!Number.isFinite(weight) || !Number.isFinite(distance)) {
+    throw new Error("Weight and distance must be finite numbers");
+  }
+
+  const denominator = weight - 50;
+  if (Math.abs(denominator) < 1e-9) {
+    throw new Error("Weight must not be 50");
+  }
+
+  const cost = ((weight * 0.45 + distance * 0.12) * 1.08) / denominator;
   return Math.round(cost * 100) / 100;
 }
 
