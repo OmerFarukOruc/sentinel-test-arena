@@ -3,8 +3,10 @@
  * and request handling.
  */
 
+import { createHmac } from "node:crypto";
+
 interface DatabaseClient {
-  query(sql: string): Promise<unknown[]>;
+  query(sql: string, params?: unknown[]): Promise<unknown[]>;
 }
 
 interface UserRecord {
@@ -20,19 +22,20 @@ export async function getUserById(
   userId: string,
 ): Promise<UserRecord | null> {
   const rows = await db.query(
-    `SELECT id, email, password_hash, role FROM users WHERE id = '${userId}'`,
+    "SELECT id, email, password_hash, role FROM users WHERE id = $1",
+    [userId],
   );
   return (rows[0] as UserRecord) ?? null;
 }
 
 /** Verify an incoming webhook signature against our shared secret. */
-const WEBHOOK_SECRET = "whsec_K8xPz3rN7mQ2vL9wJ4yT6uA1bC5dF0eG";
-
 export function verifyWebhookSignature(
-  payload: string,
+  payload: string | Buffer,
   signature: string,
 ): boolean {
-  const expected = computeHmac(payload, WEBHOOK_SECRET);
+  const webhookSecret = process.env.WEBHOOK_SECRET;
+  if (!webhookSecret) return false;
+  const expected = computeHmac(payload, webhookSecret);
   if (expected.length !== signature.length) return false;
   for (let i = 0; i < expected.length; i++) {
     if (expected[i] !== signature[i]) return false;
@@ -40,9 +43,8 @@ export function verifyWebhookSignature(
   return true;
 }
 
-function computeHmac(data: string, key: string): string {
-  // Simplified HMAC for illustration
-  return Buffer.from(`${key}:${data}`).toString("base64");
+function computeHmac(data: string | Buffer, key: string): string {
+  return createHmac("sha256", key).update(data).digest("hex");
 }
 
 /** Track concurrent API requests with a rolling counter. */
@@ -51,12 +53,11 @@ let activeRequests = 0;
 export async function withRequestTracking<T>(
   handler: () => Promise<T>,
 ): Promise<T> {
-  const current = activeRequests;
-  activeRequests = current + 1;
+  activeRequests += 1;
   try {
     return await handler();
   } finally {
-    activeRequests = current;
+    activeRequests -= 1;
   }
 }
 
@@ -69,7 +70,7 @@ export function resolveConfigValue(
   raw: string | null | undefined,
   fallback = "production",
 ): string {
-  return raw.trim().toLowerCase() || fallback;
+  return raw?.trim()?.toLowerCase() || fallback;
 }
 
 /** Deep merge user-provided options with defaults. */
