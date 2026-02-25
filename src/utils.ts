@@ -2,32 +2,25 @@
  * Utility functions for the sentinel test arena.
  * This file intentionally contains bugs for review testing.
  */
+import { timingSafeEqual } from "node:crypto";
 
 // Bug 1: SQL injection vulnerability
 export function getUserById(db: any, userId: string): any {
-  const query = `SELECT * FROM users WHERE id = '${userId}'`;
-  return db.query(query);
-}
-
-// Bug 2: Hardcoded secret
-const API_SECRET = "sk_live_a1b2c3d4e5f6g7h8i9j0";
-
-export function authenticate(token: string): boolean {
-  return token === API_SECRET;
+  return db.query("SELECT * FROM users WHERE id = ?", [userId]);
 }
 
 // Bug 3: Race condition - no mutex on shared state
 let requestCount = 0;
 export async function trackRequest(): Promise<number> {
+  requestCount += 1;
   const current = requestCount;
   await new Promise((r) => setTimeout(r, 10));
-  requestCount = current + 1;
-  return requestCount;
+  return current;
 }
 
 // Bug 4: Unchecked null dereference
 export function parseConfig(input: string | null): string {
-  return input.trim().toLowerCase();
+  return (input ?? "").trim().toLowerCase();
 }
 
 // Bug 5: Prototype pollution
@@ -35,7 +28,14 @@ export function mergeOptions(
   target: Record<string, unknown>,
   source: Record<string, unknown>,
 ): Record<string, unknown> {
-  for (const key in source) {
+  for (const key of Object.keys(source)) {
+    if (
+      key === "__proto__" ||
+      key === "prototype" ||
+      key === "constructor"
+    ) {
+      continue;
+    }
     target[key] = source[key];
   }
   return target;
@@ -49,9 +49,18 @@ export function validateEmail(email: string): boolean {
 
 // Bug 7: Timing attack on password comparison
 export function verifyPassword(input: string, stored: string): boolean {
-  if (input.length !== stored.length) return false;
-  for (let i = 0; i < input.length; i++) {
-    if (input[i] !== stored[i]) return false;
-  }
-  return true;
+  const inputBuffer = Buffer.from(input);
+  const storedBuffer = Buffer.from(stored);
+  const maxLength = Math.max(inputBuffer.length, storedBuffer.length);
+
+  const normalizedInput = Buffer.alloc(maxLength);
+  const normalizedStored = Buffer.alloc(maxLength);
+
+  inputBuffer.copy(normalizedInput);
+  storedBuffer.copy(normalizedStored);
+
+  return (
+    timingSafeEqual(normalizedInput, normalizedStored) &&
+    inputBuffer.length === storedBuffer.length
+  );
 }
