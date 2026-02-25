@@ -6,8 +6,7 @@ import { createConnection } from "net";
  * WARNING: This has multiple intentional bugs for testing.
  */
 export function processUserData(raw: string): Record<string, unknown> {
-  // BUG: eval is a critical security vulnerability
-  const data = eval("(" + raw + ")");
+  const data = JSON.parse(raw);
   return data;
 }
 
