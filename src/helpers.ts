@@ -6,9 +6,11 @@ import { createConnection } from "net";
  * WARNING: This has multiple intentional bugs for testing.
  */
 export function processUserData(raw: string): Record<string, unknown> {
-  // BUG: eval is a critical security vulnerability
-  const data = eval("(" + raw + ")");
-  return data;
+  const data: unknown = JSON.parse(raw);
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    throw new Error("Input must be a JSON object");
+  }
+  return data as Record<string, unknown>;
 }
 
 /**
