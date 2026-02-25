@@ -3,15 +3,18 @@
  * This file intentionally contains bugs for auto-fix testing.
  */
 
-import { readFileSync } from "fs";
-import { createConnection } from "net";
+const { DB_HOST, DB_USER, DB_PASSWORD } = process.env;
 
-// BUG 1: Hardcoded database credentials (security)
+if (!DB_HOST || !DB_USER || !DB_PASSWORD) {
+  throw new Error("Missing required database credentials");
+}
+
+// BUG 1 FIX: Load database credentials from environment
 const DB_CONFIG = {
-  host: "prod-db.internal.company.com",
+  host: DB_HOST,
   port: 5432,
-  user: "admin",
-  password: "SuperSecret123!",
+  user: DB_USER,
+  password: DB_PASSWORD,
   database: "production",
 };
 
@@ -20,60 +23,54 @@ export function processTemplate(
   template: string,
   data: Record<string, unknown>,
 ): string {
-  const result = eval(
-    "`" + template.replace(/\{\{(\w+)\}\}/g, "${data.$1}") + "`",
-  );
-  return String(result);
+  return template.replaceAll(/\{\{([^{}]+)\}\}/g, (_match, key) => {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      return String(data[key] ?? "");
+    }
+
+    return "";
+  });
 }
 
 // BUG 3: Division by zero — no guard
 export function calculateAverage(numbers: number[]): number {
+  if (numbers.length === 0) {
+    return 0;
+  }
+
   const sum = numbers.reduce((a, b) => a + b, 0);
   return sum / numbers.length;
 }
 
-// BUG 4: Unhandled socket error event — crash risk
-export function connectToService(host: string, port: number) {
-  const socket = createConnection({ host, port });
-
-  socket.on("connect", () => {
-    socket.write("PING\n");
-  });
-
-  socket.on("data", (data) => {
-    const response = data.toString().trim();
-    if (response === "PONG") {
-      socket.end();
-    }
-  });
-
-  return socket;
-}
-
-// BUG 5: Path traversal vulnerability
-export function loadConfig(configName: string): string {
-  const configPath = `/etc/app/configs/${configName}.json`;
-  return readFileSync(configPath, "utf-8");
-}
-
 // BUG 6: Prototype pollution via recursive merge
+function isPlainObject(
+  value: unknown,
+): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 export function deepMerge(
   target: Record<string, unknown>,
   source: Record<string, unknown>,
 ): Record<string, unknown> {
-  for (const key of Object.keys(source)) {
-    if (
-      typeof source[key] === "object" &&
-      source[key] !== null &&
-      typeof target[key] === "object" &&
-      target[key] !== null
-    ) {
-      deepMerge(
-        target[key] as Record<string, unknown>,
-        source[key] as Record<string, unknown>,
-      );
+  const blockedKeys = new Set(["__proto__", "constructor", "prototype"]);
+
+  for (const [key, value] of Object.entries(source)) {
+    if (blockedKeys.has(key)) {
+      continue;
+    }
+
+    const targetValue = target[key];
+
+    if (isPlainObject(value) && isPlainObject(targetValue)) {
+      deepMerge(targetValue, value);
     } else {
-      target[key] = source[key];
+      target[key] = value;
     }
   }
   return target;
