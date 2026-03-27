@@ -1,0 +1,27 @@
+{
+  "issue": "NIN-47",
+  "status": "done",
+  "recorded_at_utc": "2026-03-27T17:46:43Z",
+  "current_working_directory": "/home/oruc/Desktop/workspace/symphony-workspaces/NIN-47",
+  "summary": "Minimal smoke verification succeeded. The workspace is reachable, the repository README is readable, and the smoke result artifacts were generated from a reproducible local check.",
+  "verification": {
+    "workspace_accessible": true,
+    "readme_readable": true,
+    "top_level_listing_available": true,
+    "git_pointer_readable": true,
+    "git_status_available": false
+  },
+  "environment": {
+    "top_level_files": [
+      ".git",
+      ".gitguardian.yml",
+      "README.md",
+      "SYMPHONY_SMOKE_RESULT.json",
+      "SYMPHONY_SMOKE_RESULT.md",
+      "smoke_check.sh"
+    ],
+    "git_pointer": "/home/oruc/Desktop/workspace/symphony-workspaces/.base/https-github.com-OmerFarukOruc-sentinel-test-arena.git/worktrees/NIN-47",
+    "readme_sha256": "6473ea7dd6cffc05a9219c4ef2b27a84b1fd494753250c844cac681c63ff010b",
+    "git_status_error": "fatal: not a git repository: /home/oruc/Desktop/workspace/symphony-workspaces/.base/https-github.com-OmerFarukOruc-sentinel-test-arena.git/worktrees/NIN-47"
+  }
+}
