@@ -1,0 +1,27 @@
+{
+  "issue": "NIN-65",
+  "status": "done",
+  "recorded_at_utc": "2026-03-29T21:45:46Z",
+  "current_working_directory": "/home/oruc/Desktop/workspace/symphony-e2e-workspaces/NIN-65",
+  "summary": "Minimal smoke verification succeeded. The workspace is reachable, the repository README is readable, and the smoke result artifacts were generated from a reproducible local check.",
+  "verification": {
+    "workspace_accessible": true,
+    "readme_readable": true,
+    "top_level_listing_available": true,
+    "git_pointer_readable": true,
+    "git_status_available": true
+  },
+  "environment": {
+    "top_level_files": [
+      ".git",
+      ".gitguardian.yml",
+      "README.md",
+      "SYMPHONY_SMOKE_RESULT.json",
+      "SYMPHONY_SMOKE_RESULT.md",
+      "smoke_check.sh"
+    ],
+    "git_pointer": "",
+    "readme_sha256": "f9a0f28c4d8d83278c699b5c1042c27a250562ef355ad88e3cb5811f60c572bb",
+    "git_status_error": ""
+  }
+}
