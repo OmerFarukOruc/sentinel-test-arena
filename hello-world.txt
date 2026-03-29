@@ -1,0 +1,2 @@
+Hello from the Sentinel smoke test harness.
+Use this file to verify the workspace clone before running more involved e2e checks.
