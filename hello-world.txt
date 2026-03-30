@@ -1,0 +1,2 @@
+Hello, world!
+This file supports the NIN-66 smoke test and ensures the e2e pipeline can detect simple artifacts.
